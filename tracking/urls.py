@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     TripCreateView, TripListView, TripDetailView, TripUpdateView,
-    StartTripView, LogELDEventView, LogGPSView, CompleteStopView
+    StartTripView, LogELDEventView, LogGPSView, CompleteStopView,DailyELDLogView,ChangeELDStatusView
 )
 
 urlpatterns = [
@@ -13,4 +13,6 @@ urlpatterns = [
     path('<int:pk>/log-eld/', LogELDEventView.as_view(), name='log_eld'),
     path('<int:pk>/log-gps/', LogGPSView.as_view(), name='log_gps'),
     path('<int:pk>/complete-stop/<int:stop_id>/', CompleteStopView.as_view(), name='complete_stop'),
+    path('trip/<int:trip_id>/logs/<str:date_str>/', DailyELDLogView.as_view(), name='daily_eld_logs'),
+    path('trip/<int:trip_id>/change-status/', ChangeELDStatusView.as_view(), name='change_eld_status'),
 ]
