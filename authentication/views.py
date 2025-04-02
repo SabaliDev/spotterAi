@@ -1,5 +1,7 @@
 from authentication.serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import generics
@@ -34,3 +36,10 @@ class RegisterView(generics.CreateAPIView):
         user.is_active = True  # Ensure user is active
         user.save()
         return Response(serializer.data, status=201)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
