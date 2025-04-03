@@ -363,3 +363,54 @@ have been on duty for 70 hours. You would not be able drive again until you drop
 in an 8-day period. However, if your company allows you to use the 34-hour restart provision, you would
 have driving time available immediately after 34 consecutive hours off duty. You would then begin a new
 period of 8 consecutive days and have 70 hours available.
+
+
+
+
+///requests
+
+API Request Sequence for TestingThis sequence simulates registering a driver, creating a trip, starting it, changing statuses, and checking logs/compliance.Variables:BASE_URL: http://localhost:8000 (Adjust if different)ACCESS_TOKEN: Store the access token obtained from login.TRIP_ID: Store the ID of the trip created.TEST_DATE: The date string for checking logs (e.g., 2025-04-03).1. Register a New DriverMethod: POSTURL: {BASE_URL}/api/auth/register/Headers: Content-Type: application/jsonBody:{
+    "username": "testdriver",
+    "email": "driver@example.com",
+    "password": "testpassword123",
+    "confirm_password": "testpassword123",
+    "is_driver": true,
+    "first_name": "Test",
+    "last_name": "Driver"
+}
+Expected Response: 201 Created with user details.2. Login as the DriverMethod: POSTURL: {BASE_URL}/api/auth/login/Headers: Content-Type: application/jsonBody:{
+    "username": "testdriver",
+    "password": "testpassword123"
+}
+Expected Response: 200 OK with access and refresh tokens.Action: Save the access token to use as ACCESS_TOKEN for subsequent requests.3. Create a New TripMethod: POSTURL: {BASE_URL}/api/tracking/create/Headers:Content-Type: application/jsonAuthorization: Bearer <ACCESS_TOKEN>Body: (Use realistic coordinates){
+    "title": "Cross Country Load",
+    "description": "Picking up goods in LA, delivering to NYC",
+    "current_location": "Los Angeles, CA",
+    "current_coordinates": "34.0522,-118.2437",
+    "pickup_location": "Warehouse A, Los Angeles, CA",
+    "pickup_coordinates": "34.0522,-118.2437",
+    "dropoff_location": "Warehouse B, New York, NY",
+    "dropoff_coordinates": "40.7128,-74.0060",
+    "current_cycle_used": 10.5,
+    "startDate": "2025-04-03T08:00:00Z"
+}
+Expected Response: 201 Created with trip details, including the generated route and its stops. The initial planned ELDLog entries should also be created in the database.Action: Save the id from the response as TRIP_ID. Set TEST_DATE based on the startDate.4. (Optional) Get Trip DetailsMethod: GETURL: {BASE_URL}/api/tracking/{TRIP_ID}/Headers: Authorization: Bearer <ACCESS_TOKEN>Expected Response: 200 OK with full trip details, including the associated route and stops.5. Start the TripMethod: POSTURL: {BASE_URL}/api/tracking/{TRIP_ID}/start/Headers: Authorization: Bearer <ACCESS_TOKEN>Body: (Empty)Expected Response: 200 OK with updated trip details (status should be in_progress). An initial 'on_duty' ELD log might be created by this view (check your StartTripView logic).6. Change ELD Status (Example: Start Driving)Method: POSTURL: {BASE_URL}/api/tracking/trip/{TRIP_ID}/change-status/Headers:Content-Type: application/jsonAuthorization: Bearer <ACCESS_TOKEN>Body:{
+    "new_status": "driving",
+    "location": "On I-10 East near Palm Springs",
+    "coordinates": "33.8303,-116.5453"
+}
+Expected Response: 201 Created with the details of the newly created 'driving' ELD log entry. The previous log entry should now have an end_time.7. Change ELD Status (Example: Take 30-Min Break)Simulate some time passing (e.g., 4 hours of driving)Method: POSTURL: {BASE_URL}/api/tracking/trip/{TRIP_ID}/change-status/Headers:Content-Type: application/jsonAuthorization: Bearer <ACCESS_TOKEN>Body:{
+    "new_status": "off_duty",
+    "location": "Rest Area, Quartzsite, AZ",
+    "coordinates": "33.6639,-114.2255",
+    "remarks": "Taking 30-min break"
+}
+Expected Response: 201 Created with the details of the new 'off_duty' log. The previous 'driving' log is ended.8. Change ELD Status (Example: Resume Driving)Simulate 30 minutes passingMethod: POSTURL: {BASE_URL}/api/tracking/trip/{TRIP_ID}/change-status/Headers:Content-Type: application/jsonAuthorization: Bearer <ACCESS_TOKEN>Body:{
+    "new_status": "driving",
+    "location": "Leaving Rest Area, Quartzsite, AZ",
+    "coordinates": "33.6639,-114.2255"
+}
+Expected Response: 201 Created with the details of the new 'driving' log. The previous 'off_duty' break log is ended.9. Get Daily Logs for a Specific DateMethod: GETURL: {BASE_URL}/api/tracking/trip/{TRIP_ID}/logs/{TEST_DATE}/Headers: Authorization: Bearer <ACCESS_TOKEN>Expected Response: 200 OK with a list of all ELD log entries (both auto-generated and manually changed) that occurred on the specified TEST_DATE.10. Check Current HOS Compliance StatusMethod: GETURL: {BASE_URL}/api/compliance/status/Headers: Authorization: Bearer <ACCESS_TOKEN>Expected Response: 200 OK with a JSON object containing calculated remaining hours (driving, duty, cycle), time until next break, and any compliance errors detected based on the logs up to the current time.11. (Optional) Complete the TripMethod: PATCH or PUTURL: {BASE_URL}/api/tracking/{TRIP_ID}/update/Headers:Content-Type: application/jsonAuthorization: Bearer <ACCESS_TOKEN>Body:{
+    "status": "completed"
+}
+Expected Response: 200 OK with the updated trip details, including the actual_end_date being set.This flow allows you to test the core functionalities of user management, trip creation, route/log generation, status updates, log retrieval, and compliance checking.
