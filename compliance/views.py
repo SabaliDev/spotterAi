@@ -29,3 +29,4 @@ class HOSStatusView(APIView):
             print(f"Error calculating HOS status for driver {driver.id}: {e}")
             return Response({"error": "Failed to calculate HOS status."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+#add items
