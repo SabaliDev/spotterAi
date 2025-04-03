@@ -63,7 +63,7 @@ class TripUpdateView(generics.UpdateAPIView):
         trip = serializer.instance
         status = serializer.validated_data.get('status', trip.status)
         
-        # If trip is marked as completed, set actual end date
+       
         if status == 'completed' and trip.status != 'completed':
             serializer.save(actual_end_date=timezone.now())
         else:
@@ -80,12 +80,12 @@ class StartTripView(APIView):
                 return Response({"error": "Only planned trips can be started"}, 
                                 status=status.HTTP_400_BAD_REQUEST)
             
-            # Update trip status to in_progress
+            
             trip.status = 'in_progress'
             trip.startDate = timezone.now()
             trip.save()
             
-            # Create first ELD log entry - On Duty for pickup
+            
             ELDLog.objects.create(
                 trip=trip,
                 event_type='on_duty',
@@ -193,16 +193,12 @@ class DailyELDLogView(APIView):
         # Assumes settings.TIME_ZONE is set correctly (e.g., 'UTC')
         start_datetime = timezone.make_aware(datetime.combine(target_date, time.min))
         end_datetime = timezone.make_aware(datetime.combine(target_date, time.max))
-        # Alternative for end: start_datetime + timedelta(days=1) if range is exclusive of end
-
-        # Filter ELD logs for the trip that overlap with the target date range
-        # This finds logs that start OR end within the 24-hour period.
-        # Adjust filtering logic if specific behavior for logs crossing midnight is needed.
+      
         logs = ELDLog.objects.filter(
             trip=trip,
             start_time__lt=end_datetime, # Log starts before the end of the day
             end_time__gt=start_datetime   # Log ends after the start of the day
-        ).order_by('start_time') # Order logs chronologically
+        ).order_by('start_time') 
 
         # Serialize the data
         serializer = self.serializer_class(logs, many=True)
