@@ -1,0 +1,35 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "spotterAi/wsgi.py",
+        "use": "@vercel/python",
+        "config": {
+          "maxLambdaSize": "15mb",
+          "runtime": "python3.11"
+        }
+      },
+      {
+        "src": "build.sh",
+        "use": "@vercel/static-build",
+        "config": {
+          "distDir": "staticfiles"
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/static/(.*)",
+        "dest": "/staticfiles/$1"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "spotterAi/wsgi.py"
+      }
+    ],
+    "env": {
+      "DJANGO_SETTINGS_MODULE": "spotterAi.settings",
+      "PYTHON_VERSION": "3.9"
+      
+    }
+}
