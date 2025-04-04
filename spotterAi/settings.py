@@ -103,11 +103,10 @@ ORS_API_KEY="5b3ce3597851110001cf624892f9044c9cba4d648aba9a1e13ba45c4"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-      
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600 # Optional: connection pooling
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 

@@ -1,9 +1,3 @@
-databases:
-  - name: spotteraidb         
-    plan: free
-    databaseName: spotterai    #
-    user: spotterai_user 
-
 services:
   - type: web
     plan: free
@@ -13,10 +7,7 @@ services:
     startCommand: "gunicorn spotterAi.wsgi:application" 
     
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: spotteraidb     
-          property: connectionString
+    
       - key: SECRET_KEY
         generateValue: true     
       - key: ORS_API_KEY       
@@ -24,4 +15,4 @@ services:
       - key: WEB_CONCURRENCY
         value: 4               
       - key: PYTHON_VERSION     
-        value: 3.11.7           
+        value: 3.11.7
