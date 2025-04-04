@@ -3,7 +3,7 @@ services:
     plan: free
     name: spotterai-web     
     runtime: python
-    buildCommand: "./build.sh" 
+    buildCommand: "Dockerfile" 
     startCommand: "gunicorn spotterAi.wsgi:application" 
     
     envVars:
