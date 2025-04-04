@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'core',
-    'authentication',
+    'authentication.apps.AuthenticationConfig',
     'tracking',
     'routing',
     'compliance',
