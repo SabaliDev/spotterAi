@@ -147,17 +147,16 @@ def get_hos_status(driver: User, check_time: datetime = None):
     previous_log_start_for_break = check_time
 
     for log in logs_for_break_search:
-         is_break_type = log.event_type in ['off_duty', 'sleeper_berth'] # Could include 'on_duty' if policy allows
+         is_break_type = log.event_type in ['off_duty', 'sleeper_berth'] 
          log_end_for_break = log.end_time if log.end_time and log.end_time < previous_log_start_for_break else previous_log_start_for_break
 
          if is_break_type:
              duration_seconds = (log_end_for_break - log.start_time).total_seconds()
              accumulated_break_seconds += duration_seconds
              if accumulated_break_seconds >= MANDATORY_BREAK_DURATION * 3600:
-                 # Found the end of the last qualifying break
                  last_break_end_time = log_end_for_break
                  break_found = True
-                 break # Stop searching
+                 break 
          else:
              # Reset accumulated break time if non-break period encountered
              accumulated_break_seconds = 0

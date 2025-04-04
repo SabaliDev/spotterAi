@@ -18,14 +18,13 @@ class HOSStatusView(APIView):
         Calculates and returns the driver's current HOS status.
         """
         driver = request.user
-        if not driver.is_driver: # Ensure the user is a driver
+        if not driver.is_driver: 
              return Response({"error": "User is not a driver."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             hos_status = get_hos_status(driver=driver) # Use the service function
             return Response(hos_status, status=status.HTTP_200_OK)
         except Exception as e:
-            # Log the exception for debugging
             print(f"Error calculating HOS status for driver {driver.id}: {e}")
             return Response({"error": "Failed to calculate HOS status."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

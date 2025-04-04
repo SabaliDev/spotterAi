@@ -17,14 +17,11 @@ class TripCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        # Save trip with the currently authenticated driver
+       
         trip = serializer.save(driver=request.user)
         
-        # Generate route for the trip
         route = create_route_for_trip(trip)
         
-        # Include route in response if it was created
         response_data = serializer.data
         
         if route:
@@ -40,7 +37,6 @@ class TripListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Filter trips by status if provided in query params
         status_filter = self.request.query_params.get('status', None)
         queryset = Trip.objects.filter(driver=self.request.user).select_related('route')
         
@@ -179,28 +175,23 @@ class DailyELDLogView(APIView):
         Returns:
             A Response object containing the serialized ELD log data or an error.
         """
-        # Validate date format
         try:
             target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         except ValueError:
             return Response({"error": "Invalid date format. Use YYYY-MM-DD."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Get the trip object, ensuring it belongs to the requesting user
         trip = get_object_or_404(Trip, pk=trip_id, driver=request.user)
 
-        # Define the time range for the target date (from midnight to midnight)
-        # Assumes settings.TIME_ZONE is set correctly (e.g., 'UTC')
         start_datetime = timezone.make_aware(datetime.combine(target_date, time.min))
         end_datetime = timezone.make_aware(datetime.combine(target_date, time.max))
       
         logs = ELDLog.objects.filter(
             trip=trip,
-            start_time__lt=end_datetime, # Log starts before the end of the day
-            end_time__gt=start_datetime   # Log ends after the start of the day
+            start_time__lt=end_datetime, 
+            end_time__gt=start_datetime 
         ).order_by('start_time') 
 
-        # Serialize the data
         serializer = self.serializer_class(logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -224,19 +215,16 @@ class ChangeELDStatusView(APIView):
             "remarks": "Optional: Any remarks"
         }
         """
-        # Get the trip object, ensuring it belongs to the requesting user and is in progress
         trip = get_object_or_404(Trip, pk=trip_id, driver=request.user)
         if trip.status != 'in_progress':
              return Response({"error": "Trip must be in progress to change ELD status."},
                              status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Validate Input Data ---
         new_status = request.data.get('new_status')
-        location = request.data.get('location', trip.current_location) # Default to trip's current if not provided
-        coordinates = request.data.get('coordinates', trip.current_coordinates) # Default
-        remarks = request.data.get('remarks', '') # Optional remarks field in ELDLog model needed
+        location = request.data.get('location', trip.current_location) 
+        coordinates = request.data.get('coordinates', trip.current_coordinates)
+        remarks = request.data.get('remarks', '') 
 
-        # Check if new_status is valid
         valid_statuses = [choice[0] for choice in ELDLog.EVENT_TYPE_CHOICES]
         if new_status not in valid_statuses:
             return Response({"error": f"Invalid status. Choose from: {', '.join(valid_statuses)}"},
@@ -246,26 +234,19 @@ class ChangeELDStatusView(APIView):
         new_log_entry = None
 
         try:
-            # --- Find and End the Current Log Entry ---
             latest_log = ELDLog.objects.filter(trip=trip).latest('start_time')
 
-            # Avoid creating duplicate entries if status hasn't changed
             if latest_log.event_type == new_status:
                  return Response({"message": f"Status is already '{new_status}'."}, status=status.HTTP_200_OK)
 
-            if latest_log.end_time is None: # Ensure it's the truly active log
+            if latest_log.end_time is None:
                 latest_log.end_time = now
-                # Calculate duration
                 duration_delta = now - latest_log.start_time
-                latest_log.duration = duration_delta.total_seconds() / 3600 # Duration in hours
+                latest_log.duration = duration_delta.total_seconds() / 3600 
                 latest_log.save()
             else:
-                # This case might indicate an issue (e.g., previous log wasn't closed properly)
-                # Decide how to handle: log a warning, potentially still create new log?
                 print(f"Warning: Latest log for Trip {trip.id} already had an end_time.")
-                # Proceeding to create new log anyway for this example
 
-            # --- Create the New Log Entry ---
             new_log_entry = ELDLog.objects.create(
                 trip=trip,
                 event_type=new_status,
@@ -274,32 +255,26 @@ class ChangeELDStatusView(APIView):
                 duration=0.0, # Duration is 0 until ended
                 location=location,
                 coordinates=coordinates,
-                # remarks=remarks # Add remarks field to model if needed
             )
 
-            # Optionally update trip's current location/coordinates
             trip.current_location = location
             trip.current_coordinates = coordinates
             trip.save()
 
-            # Serialize the newly created log entry for the response
             serializer = ELDLogSerializer(new_log_entry)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except ELDLog.DoesNotExist:
-            # Handle case where there are no logs yet (shouldn't happen after StartTripView)
-             # Create the first entry directly
             new_log_entry = ELDLog.objects.create(
                 trip=trip,
                 event_type=new_status,
-                start_time=now, # Or should it be trip.startDate? Check logic.
+                start_time=now, 
                 end_time=None,
                 duration=0.0,
                 location=location,
                 coordinates=coordinates,
                 # remarks=remarks
             )
-             # Optionally update trip's current location/coordinates
             trip.current_location = location
             trip.current_coordinates = coordinates
             trip.save()
@@ -307,7 +282,6 @@ class ChangeELDStatusView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            # Log the exception for debugging
             print(f"Error changing ELD status for Trip {trip_id}: {e}")
             return Response({"error": "An unexpected error occurred."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

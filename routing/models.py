@@ -3,10 +3,10 @@ from tracking.models import Trip
 
 class Route(models.Model):
     trip = models.OneToOneField(Trip, on_delete=models.CASCADE, related_name="route")
-    distance = models.FloatField()  # Distance in miles
-    duration = models.FloatField()  # Time in hours
-    route_polyline = models.TextField()  # Encoded polyline for drawing the route on a map
-    stops = models.JSONField(default=list)  # List of rest/fueling stops
+    distance = models.FloatField() 
+    duration = models.FloatField()  
+    route_polyline = models.TextField()  
+    stops = models.JSONField(default=list)  
 
     def __str__(self):
         return f"Route for Trip {self.trip.id}"

@@ -2,7 +2,7 @@ import openrouteservice
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta 
-from tracking.models import Trip, ELDLog # Make sure ELDLog is imported
+from tracking.models import Trip, ELDLog 
 from .models import Route
 
 client = openrouteservice.Client(key=settings.ORS_API_KEY)
@@ -56,7 +56,6 @@ def get_stops_along_route(distance, duration, current_cycle_used, coordinates):
     duty_window_elapsed += PICKUP_DURATION # Pickup counts towards 14-hr window
     on_duty_hours_in_cycle += PICKUP_DURATION # Counts towards 70-hr cycle
 
-    # --- Main Loop for Trip Segments ---
     while remaining_distance > 0:
 
         # Calculate maximum drivable distance/time before hitting ANY limit
