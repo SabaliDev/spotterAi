@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-lp(io9o5hv)u+9%$s$9qlz2ajjgm^*7&7nq#bzk(wv87nnohb3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['spotter-c3bn.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
