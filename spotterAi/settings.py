@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ['spotter-c3bn.onrender.com', '127.0.0.1', 'localhost']
 
 # Application definition
 
+AUTH_USER_MODEL = 'authentication.User'
+
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.admin',
